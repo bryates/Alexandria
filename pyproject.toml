@@ -7,4 +7,9 @@
     version = "0.1.0"
     dependencies = [
         "numpy",
+        "langchain",
+        "langchain-google-genai",
+        "google-generativeai",
+        "python-dotenv",
+        "pypdf",
     ]

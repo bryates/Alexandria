@@ -1,7 +1,7 @@
 '''Unit tests for the Book class in library.py'''
 
 import pytest
-from library import Book
+from Alexandria.library import Book
 
 @pytest.fixture(scope='module', autouse=True)
 def b():
