@@ -11,7 +11,7 @@ def b():
 
 def test_book(b):
     '''Test the Book class'''
-    assert b.title == b.title
+    assert b.title == 'hi'
 
 
 def test_token(b):
