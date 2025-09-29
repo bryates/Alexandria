@@ -3,18 +3,23 @@ import pypdf
 from alexandria.library import Book
 from alexandria.librarian import Librarian
 
+# Decalre and initialize the librarian
 librarian = Librarian('Demetrius of Phalerum', debug=False)
 
+# Load in my thesis from local file
 byates_thesis = pypdf.PdfReader('data/bryates_thesis.pdf')
-# byates_thesis = pypdf.PdfReader(r"C:\Users\yates.313\Alexandria\data\bryates_thesis.pdf")
+# Extract the text from each page
 text = []
 for page in byates_thesis.pages:
     text.append(page.extract_text())
-# byates = Book('B.R. Yates Thesis', author='Brent Yates', doc='https://escholarship.org/content/qt372784x8/qt372784x8.pdf', category='thesis', doc_type='pdf')
+
+# Declare the book
 byates = Book('Measurement of the Shape of the b Quark Fragmentation Function Using Charmed Mesons in Proton-Proton Collisions at a Center of Mass-Energy of 13 TeV', author='Brent R. Yates', doc=text, category='thesis', doc_type='pdf')
 print(byates)
 
+# Add the book to the librarian's collection
 librarian.add_book(byates)
 # print(librarian)
 print(librarian.list_books())
+# Query the book summaries
 print(librarian.query_book_summaries(byates))
