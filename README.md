@@ -7,11 +7,12 @@ Add your documents to the LLM library
 ## Installation
 Clone the repo with
 ```bash
-git@github.com:bryates/Alexandria.git
+git clone git@github.com:bryates/Alexandria.git
 ```
 and install with
 ```bash
 pip install .
 ```
 
+## Runnig
 For details on adding documents, see an example in [thesis.py](thesis.py)
