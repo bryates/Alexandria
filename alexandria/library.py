@@ -15,7 +15,7 @@ class Book():
             self.token = doc.strip().split()
 
     def __str__(self):
-        return f"Title: '{self.title}\nAuthor: '{self.author}'\nBook type: '{self.category}'\nDocument type: '{self.type}'"
+        return f"Title: '{self.title}'\nAuthor: '{self.author}'\nBook type: '{self.category}'\nDocument type: '{self.type}'"
 
     def __repr__(self):
         return f"Book('{self.title}', {self.author}', '{self.category}', '{self.type}')"

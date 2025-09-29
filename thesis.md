@@ -1,8 +1,8 @@
-Hello, my name is Demetrius of Phalerum, and I'll be your librarian.
-Title: 'Measurement of the Shape of the b Quark Fragmentation Function Using Charmed Mesons in Proton-Proton Collisions at a Center of Mass-Energy of 13 TeV
-Author: 'Brent R. Yates'
-Book type: 'thesis'
-Document type: 'pdf'
+Hello, my name is Demetrius of Phalerum, and I'll be your librarian.<br>
+    Title: 'Measurement of the Shape of the b Quark Fragmentation Function Using Charmed Mesons in Proton-Proton Collisions at a Center of Mass-Energy of 13 TeV'<br>
+    Author: 'Brent R. Yates'<br>
+    Book type: 'thesis'<br>
+    Document type: 'pdf'<br>
 I've added "Measurement of the Shape of the b Quark Fragmentation Function Using Charmed Mesons in Proton-Proton Collisions at a Center of Mass-Energy of 13 TeV" by Brent R. Yates to the collection.
 Collection:
         "Measurement of the Shape of the b Quark Fragmentation Function Using Charmed Mesons in Proton-Proton Collisions at a Center of Mass-Energy of 13 TeV" by Brent R. Yates
