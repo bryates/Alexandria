@@ -38,13 +38,15 @@ class Librarian:
     def list_books(self):
         '''List all book titles in the collection.'''
         books = [f'"{book.title}" by {book.author}' for book in self.books]
-        return f"Collection: \n\t{'\n\t'.join(books)}"
+        return 'Collection: \n\t' + '\n\t'.join(books)
 
     def query_book_summaries(self, query=None):
         '''Use Gemini to answer a question based on book summaries.'''
-        if self.debug: print(f'{self.books=}')
+        if self.debug:
+            print(f'{self.books=}')
         summaries = ['\n'.join(book.token) for book in self.books]
-        if self.debug: print(f'{summaries=}')
+        if self.debug:
+            print(f'{summaries=}')
         if not query:
             question = '\n'.join(summaries)
         else:
