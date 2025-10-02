@@ -11,6 +11,7 @@ These documents are often internal and proprietary, so we cannot rely on public 
 Documents are loaded into memory, and using **LangChain**, they are passed to Google Gemini for processing.
 Results are returned via the **API**, and are printed to the terminal.
 The object-oriented structure allows for different "libraries" where specific documents can be placed.
+While this demo uses Gemini, the architecture supports other LLMs like GPT-4 or Claude, and can be extended to PDFs, emails, or structured databases.
 
 ## Business Problem 
 How can integrating proprietary documents with LLMs improve internal knowledge retrieval and reduce time spent searching for information in enterprise settings?
@@ -27,6 +28,7 @@ Using the "library" structure, different subsets of documents can be organized t
 
 ## Next Steps
 1. Expand to use a Retrieval-Augmented Generation (RAG)
+1. Use a vector data base like Chroma to embed documents for better context-aware searches
 <br><br><br>
 
 <img src="https://raw.githubusercontent.com/bryates/Alexandria/main/logo.jpg" width="50%">
