@@ -12,6 +12,7 @@ Documents are loaded into memory, and using **LangChain**, they are passed to Go
 Results are returned via the **API**, and are printed to the terminal.
 The object-oriented structure allows for different "libraries" where specific documents can be placed.
 While this demo uses Gemini, the architecture supports other LLMs like GPT-4 or Claude, and can be extended to PDFs, emails, or structured databases.
+See an example [parsing my PhD thesis](thesis.md).
 
 ## Business Problem 
 How can integrating proprietary documents with LLMs improve internal knowledge retrieval and reduce time spent searching for information in enterprise settings?
