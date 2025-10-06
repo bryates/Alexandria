@@ -9,7 +9,13 @@
         "numpy",
         "langchain",
         "langchain-google-genai",
+        "langchain_community",
+        "unstructured[md,pdf]",
         "google-generativeai",
         "python-dotenv",
         "pypdf",
+        "chromadb",
     ]
+
+[tool.setuptools.packages.find]
+where = ["alexandria"]
