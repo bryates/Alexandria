@@ -10,8 +10,8 @@ from langchain_community.vectorstores import Chroma
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage
-from alexandria.get_embedding_function import get_embedding_function
 from update_db import add_to_chroma, split_text
+from alexandria.get_embedding_function import get_embedding_function
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -24,12 +24,23 @@ PATHS = [
     'https://raw.githubusercontent.com/bryates/ttbarML/refs/heads/master/README.md'
 ]
 
+embedding_fn = get_embedding_function()
+
+# Load existing ChromaDB collection
+chromadb = Chroma(
+    collection_name="results",
+    embedding_function=embedding_fn,
+    persist_directory=CHROMA_PATH
+)
+collection_name = "results"
+collection = chromadb._client.get_collection(collection_name)
+
 for path in PATHS:
     docs = WebBaseLoader(path).load()
     for doc in docs:
         doc.metadata['source'] = path.split('/')[4]  # repo name
     chunks = split_text(docs)
-    add_to_chroma(chunks)
+    add_to_chroma(chunks)  
 
 
 def query_chroma(chroma_client, query, k=5):
@@ -42,51 +53,66 @@ def query_chroma(chroma_client, query, k=5):
         print("-"*50)
     return results
 
-if __name__ == "__main__":
-    embedding_fn = get_embedding_function()
 
-    # Load existing ChromaDB collection
-    chromadb = Chroma(
-        collection_name="results",
-        embedding_function=embedding_fn,
-        persist_directory=CHROMA_PATH
-    )
+# Load existing ChromaDB collection
+# chromadb = Chroma(
+#     collection_name="results",
+#     embedding_function=embedding_fn,
+#     persist_directory=CHROMA_PATH
+# )
 
-    collection_name = "results"
 
-    try:
-        collection = chromadb._client.get_collection(collection_name)
-        print(f"Loaded collection '{collection_name}' with {collection.count()} documents")
-    except Exception as e:
-        raise RuntimeError(f"Failed to load collection '{collection_name}': {e}")
+# collection = None
+# for c in collections:
+#     if c.name == 'results':
+#         collection = c
+#         break
 
-    query_text = "Find all projects where I used GPT, LLMs, NLP, or generative AI, and summarize each in 2-3 bullets."
-    query_vec = embedding_fn.embed_query(query_text)
-    if not isinstance(query_vec, np.ndarray):
-        query_vec = np.array(query_vec)
 
-    results = collection.query(
-        query_embeddings=[query_vec],
-        n_results=5,
-        include=["documents", "distances", "metadatas"]
-    )
+if collection:
+    print("Documents in 'results':", collection.count())
+    # Optionally print first 3 document IDs
+    docs = collection.get(include=[])['ids']
+    print("First 20 document IDs:", docs[:20])
+else:
+    print("Collection 'results' not found in this path.")
 
-    context_text = "\n".join([f"- {doc} (source: {meta.get('source', 'unknown')})"
-                            for doc, meta in zip(results["documents"][0], results["metadatas"][0])])
+try:
+    print(f"Loaded collection '{collection_name}' with {collection.count()} documents")
+except Exception as e:
+    raise RuntimeError(f"Failed to load collection '{collection_name}': {e}")
 
-    PROMPT_TEMPLATE = """You are an expert at summarizing project documentation.
-    Given the following context:
+query_text = "Find all projects where I used GPT, LLMs, NLP, or generative AI, and summarize each in 2-3 bullets."
+query_text = '''This job requires experience with machine learning, natural language processing (NLP), and large language models (LLMs) such as GPT.
+Also Deep Learning, Python, and cloud platforms like AWS or GCP. Can you summarize my relevant projects?'''
+query_vec = embedding_fn.embed_query(query_text)
+if not isinstance(query_vec, np.ndarray):
+    query_vec = np.array(query_vec)
 
-    {context}
+results = collection.query(
+    query_embeddings=[query_vec],
+    n_results=5,
+    include=["documents", "distances", "metadatas"]
+)
 
-    Answer the user's question concisely:
-    "{question}"
-    """
+context_text = "\n".join([f"- {doc} (source: {meta.get('source', 'unknown')})"
+                        for doc, meta in zip(results["documents"][0], results["metadatas"][0])])
 
-    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-    prompt = prompt_template.format(context=context_text, question=query_text)
+PROMPT_TEMPLATE = """You are an expert at summarizing project documentation.
+Given the following context:
 
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GEMINI_API_KEY)
-    response = llm.invoke([HumanMessage(content=prompt)])
-    print("\n=== LLM Summary ===")
-    print(response.content)
+{context}
+
+# Answer the user's question concisely:
+Based on this job posting:
+"{question}"
+find the tope 2 projects that best align and summarize each in 2-3 bullets.
+"""
+
+prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+prompt = prompt_template.format(context=context_text, question=query_text)
+
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GEMINI_API_KEY)
+response = llm.invoke([HumanMessage(content=prompt)])
+print("\n=== LLM Summary ===")
+print(response.content)

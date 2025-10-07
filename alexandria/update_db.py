@@ -53,9 +53,10 @@ def calculate_chunk_ids(chunks):
 # -------------------------------
 # Add chunks to existing ChromaDB
 # -------------------------------
-def add_to_chroma(chunks):
+def add_to_chroma(chunks, client=None):
     """Add chunks to existing ChromaDB, skipping duplicates."""
-    client = chromadb.PersistentClient(path=CHROMA_PATH)
+    if client is None:
+        client = chromadb.PersistentClient(path=CHROMA_PATH)
     collection = client.get_collection('results')  # Use existing collection only
     embedding_fn = get_embedding_function()
 
