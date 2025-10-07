@@ -11,7 +11,7 @@ These documents are often internal and proprietary, so we cannot rely on public 
 Documents are loaded into memory, and using **LangChain** and **Retrieval-Augmented Generation**, where they are passed to Google Gemini for processing.
 Results are returned via the **API**, and are printed to the terminal.
 The object-oriented structure allows for different "libraries" where specific documents can be placed.
-See an example [resume helper](resume.py) for a RAG implementation or [parsing my PhD thesis](thesis.md) for basic prompt engineering.
+See an example [resume helper](resume.md) for a RAG implementation or [parsing my PhD thesis](thesis.md) for basic prompt engineering.
 While this demo uses Gemini, the architecture supports other LLMs like GPT-4 or Claude, and can be extended to PDFs, emails, or structured databases.
 
 ## Business Problem 
