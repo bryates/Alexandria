@@ -2,16 +2,16 @@
 
 ## Skills
 Python: LangChain, general class structures</br>
-LLMs: Google Gemini API, prompt engineering
+LLMs: Google Gemini API, RAG, prompt engineering
 
 ## Executive Summary
 Internal documentation can easily surbase 100 pages for a single document.
 This makes it difficult for stakeholders and new employees to quickly fined the necessary information.
 These documents are often internal and proprietary, so we cannot rely on public large language models (LLMs) to have prior knowledge of them.
-Documents are loaded into memory, and using **LangChain**, they are passed to Google Gemini for processing.
+Documents are loaded into memory, and using **LangChain** and **Retrieval-Augmented Generation**, where they are passed to Google Gemini for processing.
 Results are returned via the **API**, and are printed to the terminal.
 The object-oriented structure allows for different "libraries" where specific documents can be placed.
-See an example [parsing my PhD thesis](thesis.md).
+See an example [resume helper](resume.py) for a RAG implementation or [parsing my PhD thesis](thesis.md) for basic prompt engineering.
 While this demo uses Gemini, the architecture supports other LLMs like GPT-4 or Claude, and can be extended to PDFs, emails, or structured databases.
 
 ## Business Problem 
@@ -20,6 +20,7 @@ How can integrating proprietary documents with LLMs improve internal knowledge r
 ## Methodology
 I built a simple interface using LangChain and the Google Gemini API to:
 1. Load important documents
+1. Add documents to a vector database (ChromeDB)
 1. Send the parsed text to Gemini for processing
 1. Simple **prompt engineering** to ensure the desired information is extracted
 
@@ -28,8 +29,7 @@ All internal documents should be add to a private copy of the repository.
 Using the "library" structure, different subsets of documents can be organized to enable faster processing.
 
 ## Next Steps
-1. Expand to use a Retrieval-Augmented Generation (RAG)
-1. Use a vector data base like Chroma to embed documents for better context-aware searches
+1. Refine/optimize vector searches and processing
 <br><br><br>
 
 <img src="https://raw.githubusercontent.com/bryates/Alexandria/main/logo.jpg" width="50%">

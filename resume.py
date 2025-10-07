@@ -84,7 +84,7 @@ except Exception as e:
 
 query_text = "Find all projects where I used GPT, LLMs, NLP, or generative AI, and summarize each in 2-3 bullets."
 query_text = '''This job requires experience with machine learning, natural language processing (NLP), and large language models (LLMs) such as GPT.
-Also Deep Learning, Python, and cloud platforms like AWS or GCP. Can you summarize my relevant projects?'''
+Also Deep Learning, Python, and cloud platforms like AWS or GCP.'''
 query_vec = embedding_fn.embed_query(query_text)
 if not isinstance(query_vec, np.ndarray):
     query_vec = np.array(query_vec)
