@@ -1,53 +1,43 @@
-''' This module crates the database connection to the ChromaDB instance and uses Google Generative AI to embed the text.'''
+"""Module to add documents to an existing ChromaDB instance."""
 import os
 from langchain_community.document_loaders.directory import DirectoryLoader
-from langchain_community.vectorstores import Chroma
 import chromadb
-from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
-from google.generativeai import configure
-import google.generativeai as genai
+from get_embedding_function import get_embedding_function
 
-
-# Load .env
+# Load environment variables
 load_dotenv()
-configure(api_key=os.getenv('GOOGLE_API_KEY'))
-
 CHROMA_PATH = os.getenv('CHROMA_PATH', 'chromadb/')
 DATA_PATH = os.getenv('DATA_PATH', 'data/')
 
-
+# -------------------------------
+# Document loading and splitting
+# -------------------------------
 def load_documents():
-    ''' Load data from the DATA_PATH directory.'''
-    # loader = DirectoryLoader(DATA_PATH, glob='**/*.pdf')
-    loader = DirectoryLoader('', glob='*.md')
+    """Load data from DATA_PATH directory."""
+    loader = DirectoryLoader(DATA_PATH, glob='*.md')
     documents = loader.load()
     return documents
 
-
 def split_text(documents):
-    ''' Split the documents into chunks.'''
+    """Split the documents into chunks."""
     from langchain.text_splitter import RecursiveCharacterTextSplitter
-    text_splitter = RecursiveCharacterTextSplitter(
+    splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
         length_function=len
     )
-    texts = text_splitter.split_documents(documents)
-    return texts
-
+    return splitter.split_documents(documents)
 
 def calculate_chunk_ids(chunks):
-    ''' Calculate unique IDs for each chunk.'''
+    """Assign unique IDs to each chunk based on source and page."""
     last_page_id = None
     current_chunk_index = 0
 
     for chunk in chunks:
-        # Assuming chunk has metadata with 'page_id'
-        source = chunk.metadata.get('source')
+        source = chunk.metadata.get('source', 'unknown')
         page = chunk.metadata.get('page', 0)
-        current_page_id = f'{source}:{page}'
-        print(f'source: {source}, page: {page}')
+        current_page_id = f"{source}:{page}"
 
         if current_page_id != last_page_id:
             current_chunk_index = 0
@@ -55,59 +45,67 @@ def calculate_chunk_ids(chunks):
             current_chunk_index += 1
         last_page_id = current_page_id
 
-        chunk.metadata['id'] = f'{current_page_id}:{current_chunk_index}'
+        chunk.metadata['id'] = f"{current_page_id}:{current_chunk_index}"
     
     return chunks
 
 
+# -------------------------------
+# Add chunks to existing ChromaDB
+# -------------------------------
 def add_to_chroma(chunks):
-    '''Add chunks to ChromaDB, skipping existing IDs.'''
-    embedding_fn = embedding_functions.GoogleGenerativeAiEmbeddingFunction(api_key=os.environ.get('GEMINI_API_KEY'))
+    """Add chunks to existing ChromaDB, skipping duplicates."""
     client = chromadb.PersistentClient(path=CHROMA_PATH)
-    collection = client.get_or_create_collection('results', embedding_function=embedding_fn)
+    collection = client.get_collection('results')  # Use existing collection only
+    embedding_fn = get_embedding_function()
 
     # Get existing IDs
     try:
-        existing_ids = set(collection.get(include=[])['ids'])
+        existing_ids = set(collection.get(include=["ids"])["ids"])
     except Exception:
         existing_ids = set()
 
-    # Only add new chunks
+    # Assign unique IDs
+    chunks = calculate_chunk_ids(chunks)
+
+    # Filter out duplicates
     new_chunks = [c for c in chunks if c.metadata['id'] not in existing_ids]
 
     if not new_chunks:
-        print('✅ No new documents to add')
+        print("No new documents to add.")
         return
-
+    print([c.metadata['id'] for c in new_chunks])
     collection.add(
         documents=[c.page_content for c in new_chunks],
         metadatas=[c.metadata for c in new_chunks],
-        ids=[c.metadata['id'] for c in new_chunks]
+        ids=[c.metadata['id'] for c in new_chunks],
+        embeddings=embedding_fn.embed_documents([c.page_content for c in new_chunks])  # Precompute embeddings
     )
-    print(f'👉 Added {len(new_chunks)} new documents to ChromaDB at "{CHROMA_PATH}".')
 
+    print(f"Added {len(new_chunks)} new documents to ChromaDB at '{CHROMA_PATH}'.")
 
+# -------------------------------
+# Optional cleaning
+# -------------------------------
 def clean_chunks(chunks):
-    ''' Clean the text chunks by removing images and non-printable characters.'''
+    """Remove images and non-printable characters from text chunks."""
     import re
     cleaned = []
     for c in chunks:
-        text = c.page_content if hasattr(c, 'page_content') else str(c)
-        # Remove HTML img tags
+        text = getattr(c, 'page_content', str(c))
         text = re.sub(r'<img[^>]*>', '', text)
-        # Remove Markdown images
         text = re.sub(r'!\[.*?\]\(.*?\)', '', text)
-        # Remove non-printable/control characters
         text = ''.join(ch for ch in text if ch.isprintable())
-        # Skip empty chunks
         if text.strip():
             cleaned.append(text)
     return cleaned
 
-docs = load_documents()
-chunks = split_text(docs)
-print([c.metadata['id'] for c in calculate_chunk_ids(chunks)])
-# chunks = clean_chunks(chunks)
-print(f'Loaded {len(docs)} documents and split into {len(chunks)} chunks.')
-add_to_chroma(chunks)
-add_to_chroma(chunks)  # Run twice to test skipping existing
+# -------------------------------
+# Main
+# -------------------------------
+if __name__ == "__main__":
+    docs = load_documents()
+    chunks = split_text(docs)
+    calculate_chunk_ids(chunks)
+    print(f"Loaded {len(docs)} documents, split into {len(chunks)} chunks.")
+    add_to_chroma(chunks)

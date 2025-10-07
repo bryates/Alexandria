@@ -8,19 +8,20 @@ from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
 from google.generativeai import configure
 import google.generativeai as genai
-
+from get_embedding_function import get_embedding_function
 
 # Load .env
 load_dotenv()
 configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-CHROMA_PATH = os.getenv("CHROMA_PATH", "chromadb/")
+CHROMA_PATH = os.getenv('CHROMA_PATH', 'chromadb/')
 DATA_PATH = os.getenv("DATA_PATH", "data/")
 
 
 def load_documents():
     ''' Load data from the DATA_PATH directory.'''
     # loader = DirectoryLoader(DATA_PATH, glob="**/*.pdf")
+    # loader = DirectoryLoader('', glob="README*.md")
     loader = DirectoryLoader('', glob="*.md")
     documents = loader.load()
     return documents
@@ -60,38 +61,47 @@ def calculate_chunk_ids(chunks):
     return chunks
 
 
-def save_to_chroma(chunks):
-    """Save documents to ChromaDB using Gemini free tier safely."""
-
-    # Clear DB folder if exists
+def save_to_chroma(chunks, batch_size=10):
+    """Save documents to ChromaDB using precomputed Gemini embeddings for speed."""
     if os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
 
-    # Initialize embedding function
-    genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-    # generation_model = genai.GenerativeModel('gemini-2.5-flash')
-
-    embedding_fn = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-        api_key=os.environ.get("GEMINI_API_KEY")
-    )
-
     chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+    embedding_fn = get_embedding_function()
+
     collection = chroma_client.get_or_create_collection(
-        name="results",
-        embedding_function=embedding_fn
+        name="results"
+        # no embedding function needed here because we'll provide vectors
     )
 
-    if collection.count() == 0:
+    existing_docs = collection.get(include=["metadatas"])
+    existing_ids = set(m["id"] for m in existing_docs["metadatas"])
+    new_chunks = [c for c in chunks if c.metadata["id"] not in existing_ids]
+
+    if not new_chunks:
+        print("No new documents to add.")
+        return
+
+    for i in range(0, len(new_chunks), batch_size):
+        batch = new_chunks[i:i+batch_size]
+        docs = [c.page_content for c in batch]
+        metadatas = [c.metadata for c in batch]
+        ids = [c.metadata["id"] for c in batch]
+
+        # precompute embeddings for the whole batch
+        embeddings = embedding_fn.embed_documents(docs)  # __call__ returns list of lists
+
         collection.add(
-            documents=[c.page_content for c in chunks],
-            metadatas=[c.metadata for c in chunks],
-            ids=[c.metadata["id"] for c in chunks]
+            documents=docs,
+            metadatas=metadatas,
+            ids=ids,
+            embeddings=embeddings  # pass precomputed vectors
         )
-        print("Collection populated.")
-    else:
-        print("Collection already contains data.")
-    collection = chroma_client.get_or_create_collection("results", embedding_function=embedding_fn)
-    existing_ids = set(collection.get(include=[])['ids'])
+
+        print(f"Added batch {i // batch_size + 1}: {len(batch)} chunks")
+
+    print(f"Finished adding {len(new_chunks)} chunks to ChromaDB at {CHROMA_PATH}.")
+
 
 
 def clean_chunks(chunks):
